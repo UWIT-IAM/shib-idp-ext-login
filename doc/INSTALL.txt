@@ -1,0 +1,144 @@
+INSTALLATION
+============
+
+1) Add the extension project jar and all its dependencies from the extension lib directory to the IdP source
+   distribution's lib directory.
+
+2) Re-run the IdP install script to build and deploy the new WAR file.
+
+3) Edit the IdP's configuration files:
+
+
+------------
+handler.xml
+------------
+
+1) Add namespace info for the plugin. e.g.,
+
+         <ProfileHandlerGroup xmlns="urn:mace:shibboleth:2.0:idp:profile-handler"
+                     xmlns:uwlogin="urn:mace:washington.edu:shibboleth:2.0:authn"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xsi:schemaLocation="urn:mace:shibboleth:2.0:idp:profile-handler classpath:/schema/shibboleth-2.0-idp-profile-handler.xsd
+                     urn:mace:washington.edu:shibboleth:2.0:authn classpath:/schema/uwlogin.xsd
+                     ">
+
+2) Comment out the distributed RemoteUser login handler and replace with:
+   ( use your paths )
+
+  <!-- UW login handler -->
+    <LoginHandler xsi:type="uwlogin:UWLogin"
+             jaasConfigurationLocation="file:///data/local/idp/conf/login.config"
+             plainAuthnURL="/Authn/UWLogin"
+             forceAuthnURL="/Authn/UWLoginForce"
+             passiveAuthnURL="/Authn/UWLoginPassive"
+             tokenAuthnURL="/Authn/UWLoginToken"
+             ssoCookieName="pubcookie.*">
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified</AuthenticationMethod>
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken</AuthenticationMethod>
+    </LoginHandler>
+
+
+   where the URLs are the locations where pubcookie is configured to
+   do the corresponding login.  e.g. 
+
+       at '/Authn/UWLogin' the user logs in with id and password
+
+       at '/Authn/UWLoginForce' there is a "PubcookieSessionCauseReAuth" directive
+
+       at '/Authn/UWLoginToken' there is a "AuthType securid" directive (at least at UW)
+
+       at '/Authn/UWLoginSilver' there are whatever directives needed to support silver
+
+   The ssoCookieName tells the handler which SSO session cookies have to be cleared.
+
+
+       
+----------
+idp's web.xml
+-----------
+
+Add elements for the login handlers
+
+    <!-- UWLogin points -->
+<!--
+ Do this if needed for ispassive login
+    <servlet>
+        <servlet-name>UWLoginAuthHandler</servlet-name>
+        <servlet-class>edu.washington.shibboleth.authn.provider.UWLoginServlet</servlet-class>
+    </servlet>
+ -->
+    <servlet-mapping>
+        <servlet-name>RemoteUserAuthHandler</servlet-name>
+        <url-pattern>/Authn/UWLogin</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RemoteUserAuthHandler</servlet-name>
+        <url-pattern>/Authn/UWLoginForce</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RemoteUserAuthHandler</servlet-name>
+        <url-pattern>/Authn/UWLoginPassive</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RemoteUserAuthHandler</servlet-name>
+        <url-pattern>/Authn/UWLoginToken</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RemoteUserAuthHandler</servlet-name>
+        <url-pattern>/Authn/UWLoginSilver</url-pattern>
+    </servlet-mapping>
+
+
+
+-----------
+apache config
+-----------
+
+
+Add the appropriate Location directives to your Apache config to trigger pubcookie logins:
+
+   At UW, for example, we have
+
+    <Location /idp/Authn/UWLogin>
+        AuthType UWNetID
+        PubcookieAppID u2shib
+        require valid-user
+    </Location>
+    <Location /idp/Authn/UWLoginForce>
+        AuthType UWNetID
+        PubcookieAppID u2shib
+        PubcookieSessionCauseReAuth 5
+        require valid-user
+    </Location>
+    <Location /idp/Authn/UWLoginPassive>
+        AuthType UWNetID
+        PubcookieAppID u2shib
+        PubcookieNoPrompt on
+        require valid-user
+    </Location>
+    <Location /idp/Authn/UWLoginToken>
+        AuthType securid
+        PubcookieAppID u2shib
+        require valid-user
+    </Location>
+    
+    <Location /idp/Authn/UWLoginSilver>
+        AuthType UWNetID
+        PubcookieAppID u2shib
+        require ???
+    </Location>
+
+
+=====================================
+
+
+
+At an SP: to invoke a session that requires 2-factor (token) auth
+use a session initiator with the attribute: authnContextClassRef="urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken"
+
+similar for silver
+
+
+
+

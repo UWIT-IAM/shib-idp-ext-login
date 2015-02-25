@@ -1,0 +1,26 @@
+<xsd:schema targetNamespace="urn:mace:washington.edu:shibboleth:2.0:authn"
+        xmlns="urn:mace:washington.edu:shibboleth:2.0:authn"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:ph="urn:mace:shibboleth:2.0:idp:profile-handler"
+        elementFormDefault="qualified">
+
+    <xsd:import namespace="urn:mace:shibboleth:2.0:idp:profile-handler" schemaLocation="classpath:/schema/shibboleth-2.0-idp-profile-handler.xsd" />
+
+    <xsd:complexType name="UWLogin">
+        <xsd:complexContent>
+            <xsd:extension base="ph:LoginHandlerType">
+                <xsd:attribute name="plainAuthnURL" type="xsd:string" />
+                <xsd:attribute name="forceAuthnURL" type="xsd:string" />
+                <xsd:attribute name="passiveAuthnURL" type="xsd:string" />
+                <xsd:attribute name="tokenAuthnURL" type="xsd:string" />
+                <xsd:attribute name="token30AuthnURL" type="xsd:string" />
+                <xsd:attribute name="silverAuthnURL" type="xsd:string" />
+                <xsd:attribute name="autoTokenAuthnURL" type="xsd:string" />
+                <xsd:attribute name="autoTokenFilename" type="xsd:string" />
+                <xsd:attribute name="ssoCookieName" type="xsd:string" />
+                <xsd:attribute name="jaasConfigurationLocation" type="xsd:string" />
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+</xsd:schema>
